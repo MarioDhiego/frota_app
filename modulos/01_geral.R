@@ -24,13 +24,15 @@ total_ui <- function(id) {
   ),
   div(class = "navbar_dash",
       #Infobox----
-      #Total Pará
       fluidRow(
-      bs4InfoBoxOutput(NS(id,"total_pa")),
+      #Total Pará acumulado
+      bs4InfoBoxOutput(NS(id,"total_pa"),width = 3),
+      #Total Pará do ano
+      bs4InfoBoxOutput(NS(id,"total_pa_acumulado"),width = 3),
       #RI com maior quantidade
-      bs4InfoBoxOutput(NS(id,"max_ri")),
+      bs4InfoBoxOutput(NS(id,"max_ri"),width = 3),
       #Tipo de Véiculo com maior Frota
-      bs4InfoBoxOutput(NS(id,"max_tipo")),
+      bs4InfoBoxOutput(NS(id,"max_tipo"),width = 3),
       ),
       
       #Controle----
@@ -243,12 +245,21 @@ total_ui <- function(id) {
 total_Server <- function(id) {
   moduleServer(id, function(input, output, session) {
     #Caixas de Valor----
-    #Total Pará
+    #Total Pará acumulado
     output$total_pa <- renderInfoBox({
-      valor <- frota %>% filter(local == "Pará",variavel == "Total de veículo Licenciados",ano == input$ano) %>% select(valor)
+      valor <- frota %>% filter(local == "Pará",
+                                variavel == "Total Acumulado de veículo Licenciados",
+                                ano == input$ano) %>% select(valor)
       bs4InfoBox(
-        title = tags$strong("PARÁ"), 
-        value = tags$h2(tags$strong(prettyNum(valor$valor, big.mark = ".", decimal.mark = ",", scientific = FALSE))),
+        title = tags$strong("PARÁ"),
+        value = tags$h2(tags$strong(
+          prettyNum(
+            valor$valor,
+            big.mark = ".",
+            decimal.mark = ",",
+            scientific = FALSE
+          )
+        )),
         subtitle = paste0("Total de Veículos Registrados - ", input$ano),
         color = "primary",
         fill = TRUE,
@@ -257,6 +268,30 @@ total_Server <- function(id) {
         icon = icon("car")
       )
     })
+    #Total Pará no ano
+    output$total_pa_acumulado <- renderInfoBox({
+      valor <- frota %>% filter(local == "Pará",
+                                variavel == "Total de veículo Licenciados",
+                                ano == input$ano) %>% select(valor)
+      bs4InfoBox(
+        title = tags$strong("PARÁ"),
+        value = tags$h2(tags$strong(
+          prettyNum(
+            valor$valor,
+            big.mark = ".",
+            decimal.mark = ",",
+            scientific = FALSE
+          )
+        )),
+        subtitle = paste0("Total de Veículos Registrados no ano - ", input$ano),
+        color = "danger",
+        fill = TRUE,
+        gradient = TRUE,
+        iconElevation = 2,
+        icon = icon("car")
+      )
+    })
+    
     #Maximo RI
     output$max_ri <- renderInfoBox({
       valor <- frota %>%
@@ -337,12 +372,12 @@ total_Server <- function(id) {
       if (input$tipo == "Total de Veículos") {
         if (input$local == "Pará") {
           df <- frota %>%
-            filter(ri != "Pará", ano == input$ano, variavel == "Total de veículo Licenciados", tipo_veiculo == input$tipo) %>%
+            filter(ri != "Pará", ano == input$ano, variavel == "Total Acumulado de veículo Licenciados", tipo_veiculo == input$tipo) %>%
             select(ri, tipo_veiculo, local, ano, valor)
           x <- cbind(geopa, df)
         } else {
           df <- frota %>%
-            filter(ri != "Pará", ano == input$ano, variavel == "Total de veículo Licenciados", tipo_veiculo == input$tipo) %>%
+            filter(ri != "Pará", ano == input$ano, variavel == "Total Acumulado de veículo Licenciados", tipo_veiculo == input$tipo) %>%
             select(ri, tipo_veiculo, local, ano, valor)
           x <- cbind(geopa, df) %>%
             filter(ri == input$local)
@@ -476,12 +511,12 @@ total_Server <- function(id) {
       if (input$local == "Pará") {
         df <-
           frota %>%
-          filter(ri !="Pará",variavel == "Total de veículo Licenciados", ano == input$ano) %>%
+          filter(ri !="Pará",variavel == "Total Acumulado de veículo Licenciados", ano == input$ano) %>%
           rename(regiao_integracao = ri)
       }else{
         df <-
           frota %>%
-          filter(ri != "Pará",variavel == "Total de veículo Licenciados", ano == input$ano)
+          filter(ri != "Pará",variavel == "Total Acumulado de veículo Licenciados", ano == input$ano)
         df <-
           df %>% filter(ri == input$local) %>%
           rename(regiao_integracao = ri)
@@ -499,12 +534,12 @@ total_Server <- function(id) {
       if (input$tipo == "Total de Veículos") {
         if (input$local == "Pará") {
           df <- frota %>%
-            filter(ri != "Pará", ano == input$ano, variavel == "Total de veículo Licenciados", tipo_veiculo == input$tipo) %>%
+            filter(ri != "Pará", ano == input$ano, variavel == "Total Acumulado de veículo Licenciados", tipo_veiculo == input$tipo) %>%
             select(local, valor) %>%
             mutate(Percentual = (valor / sum(valor,na.rm = TRUE)) * 100)
         } else {
           df <- frota %>%
-            filter(ri != "Pará", ano == input$ano, variavel == "Total de veículo Licenciados", tipo_veiculo == input$tipo) %>%
+            filter(ri != "Pará", ano == input$ano, variavel == "Total Acumulado de veículo Licenciados", tipo_veiculo == input$tipo) %>%
             filter(ri == input$local) %>% 
             select(local, valor) %>%
             mutate(Percentual = (valor / sum(valor,na.rm = TRUE)) * 100)
@@ -692,12 +727,12 @@ total_Server <- function(id) {
       req(input$localc2)
       if (input$localc2 == "Selecione um município") {
         a <- frota %>% 
-          filter(local == input$localc1, variavel == "Total de veículo Licenciados") %>% 
+          filter(local == input$localc1, variavel == "Total Acumulado de veículo Licenciados") %>% 
           rename(regiao_integracao = ri)
       }
       else {
-        a <- frota %>% filter(local == input$localc1,variavel == "Total de veículo Licenciados")
-        b <- frota %>% filter(local == input$localc2,variavel == "Total de veículo Licenciados")
+        a <- frota %>% filter(local == input$localc1,variavel == "Total Acumulado de veículo Licenciados")
+        b <- frota %>% filter(local == input$localc2,variavel == "Total Acumulado de veículo Licenciados")
         df <- rbind(a,b)
         df <- df %>% rename(regiao_integracao = ri)
       }
@@ -717,7 +752,7 @@ total_Server <- function(id) {
       req(input$localc2)
       if (input$localc2 == "Selecione um município") {
         a <- frota %>% 
-          filter(local == input$localc1, variavel == "Total de veículo Licenciados")
+          filter(local == input$localc1, variavel == "Total Acumulado de veículo Licenciados")
         a %>%
           e_charts(x = ano) %>%
           e_line(
@@ -763,8 +798,8 @@ total_Server <- function(id) {
           e_grid(show = TRUE)
       } else {
         frota$valor <- ifelse(is.na(frota$valor), 0, frota$valor)
-        a <- frota %>% filter(local == input$localc1,variavel == "Total de veículo Licenciados")
-        b <- frota %>% filter(local == input$localc2,variavel == "Total de veículo Licenciados")
+        a <- frota %>% filter(local == input$localc1,variavel == "Total Acumulado de veículo Licenciados")
+        b <- frota %>% filter(local == input$localc2,variavel == "Total Acumulado de veículo Licenciados")
         a %>%
           e_charts(x = ano) %>%
           e_line(
@@ -854,7 +889,7 @@ total_Server <- function(id) {
     })
         output$graftreemap <- renderEcharts4r({
           mapa <- frota %>%
-            filter(variavel == "Total de veículo Licenciados",
+            filter(variavel == "Total Acumulado de veículo Licenciados",
                    ri != "Pará",
                    ano == "2023") %>%
             group_by(ri) %>%
@@ -880,7 +915,7 @@ total_Server <- function(id) {
           # Crie uma função para filtrar os dados
           filtrar_grupo <- function(grupo) {
             frotamap %>%  
-              filter(ri != "Pará", variavel == "Total de veículo Licenciados", ri == grupo) %>%
+              filter(ri != "Pará", variavel == "Total Acumulado de veículo Licenciados", ri == grupo) %>%
               select(local, valor) %>% rename(name = local, value = valor)
           }
           
