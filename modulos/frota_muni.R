@@ -142,7 +142,7 @@ frotamuni_Server <- function(id) {
     #Título
     titulo1 <- reactive({
       req(input$municomp1)
-      if (input$municomp1 == "Selecione um município") {
+      if (input$municomp1 == "Selecione um Município") {
         paste0("Total da Frota de Veículos: Licenciados e Não Licenciados, ", input$muni, " - ", input$ano)
       } else {
         paste0("Total da Frota de Veículos: Licenciados e Não Licenciados, ", input$muni, " x ", input$municomp1, " - ", input$ano)
@@ -151,7 +151,7 @@ frotamuni_Server <- function(id) {
     # Filtra os dados
     frotabardown <- reactive({
       req(input$municomp1)
-      if (input$municomp1 == "Selecione um município") {
+      if (input$municomp1 == "Selecione um Município") {
         a <- frota2 %>% filter(municipio == input$muni, 
                                ano == input$ano, categoria != "Frota")
       } else {
@@ -186,7 +186,7 @@ frotamuni_Server <- function(id) {
     #Gráfico bar
     output$grafbar <- renderEcharts4r({
       req(input$municomp1)
-      if (input$municomp1 == "Selecione um município") {
+      if (input$municomp1 == "Selecione um Município") {
         a <- frota2 %>% filter(municipio == input$muni, 
                                ano == input$ano, categoria != "Frota")
         a %>%
@@ -319,7 +319,7 @@ frotamuni_Server <- function(id) {
       x <- frota2 %>%
         filter(municipio == input$muni) %>%
         pivot_wider(names_from = categoria, values_from = valor) %>% 
-        select(-ri,-variavel,-municipio) 
+        select(-ri,-municipio) 
       x %>% reactable(
         height = 400,
         defaultSorted = list(ano = "desc"),
@@ -355,7 +355,7 @@ frotamuni_Server <- function(id) {
     ## Gráfico de linha - Total da Frota de Veículos Subdivididos em Licenciados e Não Licenciados----
     titulo3 <- reactive({
       req(input$municomp2)
-      if (input$municomp2 == "Selecione um município") {
+      if (input$municomp2 == "Selecione um Município") {
         paste0("Total da Frota de Veículos, ", input$muni, " - ", min(frota2$ano), " a ", max(frota2$ano))
       } else {
         paste0("Total da Frota de Veículos, ", input$muni, " x ", input$municomp2, " - ", min(frota2$ano), " a ", max(frota2$ano))
@@ -379,7 +379,7 @@ frotamuni_Server <- function(id) {
     # Filtra os dados
     inf1_3 <- reactive({
       req(input$municomp2)
-      if (input$municomp2 == "Selecione um município") {
+      if (input$municomp2 == "Selecione um Município") {
         a <- frota2 %>% filter(municipio == input$muni, 
                                categoria == "Frota")
       } else {
@@ -396,7 +396,7 @@ frotamuni_Server <- function(id) {
     #Gráfico
     output$grafline <- renderEcharts4r({
       req(input$municomp2)
-      if (input$municomp2 == "Selecione um município") {
+      if (input$municomp2 == "Selecione um Município") {
         a <- frota2 %>% filter(municipio == input$muni, 
         categoria == "Frota")
         a %>%

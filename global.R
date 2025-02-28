@@ -39,7 +39,7 @@ classInt # Seleciona intervalos de classe para dados numéricos
 )
 
 #Carregar base de dados
-load("data.RData")
+load("data2025-02-28.RData")
 
 #Função de formatação mapa
 labelFormat_decimal <- function (prefix = "", suffix = "", between = " &ndash; ", digits = 3,

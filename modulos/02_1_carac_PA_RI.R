@@ -9,7 +9,7 @@ loc_ui <- function(id) {
                  selectInput(
                    inputId = NS(id, "local"),
                    label = "LOCALIDADE",
-                   choices = unique(frota[["ri"]]),
+                   choices = unique(frota_acumulado[["ri"]]),
                    width = "200px"
                  )
           ),
@@ -17,7 +17,7 @@ loc_ui <- function(id) {
                  selectInput(
                    inputId = NS(id, "anolocal"),
                    label = "ANO",
-                   choices = sort(unique(frota[["ano"]]), decreasing = TRUE),
+                   choices = sort(unique(frota_acumulado[["ano"]]), decreasing = TRUE),
                    width = "200px"
                  )
           ) 
@@ -196,7 +196,6 @@ loc_ui <- function(id) {
 # Função do modulo servidor
 loc_Server <- function(id) {
   moduleServer(id, function(input, output, session) {
-    #===============================================================================
     #Tabelas - Perfil----
     titulo6 <- renderText({
       if (input$local == "Pará") {
@@ -213,36 +212,36 @@ loc_Server <- function(id) {
     #Download
     dowtab <- reactive({
       categoria <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Categoria do veículo", ano == input$anolocal) %>% 
+        db02_categoria_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
         arrange(desc(valor)) %>%  slice_head(n = 1)
       
       cor <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Cor do veículo", ano == input$anolocal) %>%
+        db04_cores_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>%
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%   
         arrange(desc(valor)) %>% slice_head(n = 1)
       
       combustivel <-
-        frota %>% 
-        filter(ri == input$local,variavel == "Tipo de combustível(s) utilizado(s)", ano == input$anolocal) %>% 
+        db05_combustivel_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>% 
         arrange(desc(valor)) %>%  slice_head(n = 1)
       
       especie <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Espécie de Veículo", ano == input$anolocal) %>% 
+        db06_especie_veiculo_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
         arrange(desc(valor)) %>%  slice_head(n = 1)
       
       nacionalidade <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Nacionalidade do Veículo", ano == input$anolocal) %>% 
+        db07_nacionalidade_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
         arrange(desc(valor)) %>%  slice_head(n = 1)
@@ -260,36 +259,36 @@ loc_Server <- function(id) {
     
     output$tab <- renderReactable({
       categoria <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Categoria do veículo", ano == input$anolocal) %>% 
+        db02_categoria_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
         arrange(desc(valor)) %>%  slice_head(n = 1)
       
       cor <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Cor do veículo", ano == input$anolocal) %>%
+        db04_cores_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>%
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%   
         arrange(desc(valor)) %>% slice_head(n = 1)
       
       combustivel <-
-        frota %>% 
-        filter(ri == input$local,variavel == "Tipo de combustível(s) utilizado(s)", ano == input$anolocal) %>% 
+        db05_combustivel_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>% 
         arrange(desc(valor)) %>%  slice_head(n = 1)
       
       especie <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Espécie de Veículo", ano == input$anolocal) %>% 
+        db06_especie_veiculo_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
         arrange(desc(valor)) %>%  slice_head(n = 1)
       
       nacionalidade <-
-        frota %>% 
-        filter(ri == input$local, variavel == "Nacionalidade do Veículo", ano == input$anolocal) %>% 
+        db07_nacionalidade_acumulado %>% 
+        filter(ri == input$local, ano == input$anolocal) %>% 
         group_by(variavel,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
         arrange(desc(valor)) %>%  slice_head(n = 1)
@@ -352,7 +351,7 @@ loc_Server <- function(id) {
     
     #Download
     downcat <- reactive({
-      frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Categoria do veículo") %>% 
+      db02_categoria_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% complete() %>% 
         arrange(valor) %>% mutate(variavel = "Categoria do veículo",ano = input$anolocal) %>% 
@@ -366,7 +365,7 @@ loc_Server <- function(id) {
     })
     
     output$catbar <- renderEcharts4r({
-      frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Categoria do veículo") %>% 
+      db02_categoria_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% complete() %>% 
         arrange(valor) %>% 
@@ -439,7 +438,7 @@ loc_Server <- function(id) {
     
     #Download
     downcor <- reactive({
-     frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Cor do veículo") %>% 
+     db04_cores_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% complete() %>% 
         arrange(valor) %>% mutate(variavel = "Cor do veículo",ano = input$anolocal) %>% 
@@ -453,7 +452,7 @@ loc_Server <- function(id) {
     })
     
     output$corbar <- renderEcharts4r({
-     frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Cor do veículo") %>% 
+     db04_cores_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% complete() %>% 
         arrange(valor) %>% 
@@ -527,7 +526,7 @@ loc_Server <- function(id) {
     
     #Download
     downcombu <- reactive({
-     frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Tipo de combustível(s) utilizado(s)") %>% 
+     db05_combustivel_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
         arrange(valor) %>% mutate(variavel = "Tipo de combustível(s) utilizado(s)",ano = input$anolocal) %>% 
@@ -541,7 +540,7 @@ loc_Server <- function(id) {
     })
     
     output$combubar <- renderEcharts4r({
-      frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Tipo de combustível(s) utilizado(s)") %>% 
+      db05_combustivel_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         arrange(valor) %>% 
@@ -613,7 +612,7 @@ output$txtesp <- renderText({
     
     #Download
     downesp <- reactive({
-     frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Espécie de Veículo") %>% 
+     db06_especie_veiculo_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         arrange(valor) %>% mutate(variavel = "Espécie de Veículo",ano = input$anolocal) %>% 
@@ -627,7 +626,7 @@ output$txtesp <- renderText({
     })
 
     output$espbar <- renderEcharts4r({
-      frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Espécie de Veículo") %>% 
+      db06_especie_veiculo_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% 
         summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         arrange(valor) %>% 
@@ -698,7 +697,7 @@ output$txtesp <- renderText({
     
     #Download
     downac <- reactive({
-     frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Nacionalidade do Veículo") %>% 
+     db07_nacionalidade_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
         arrange(valor) %>% mutate(ano = input$anolocal, percentual = (valor/sum(valor,na.rm = T))*100) %>% 
         select(ri,categoria,ano,valor,percentual)
@@ -709,7 +708,7 @@ output$txtesp <- renderText({
       downset_Server("nacdown", downac(), titulo5())  
     })
     output$nacpie <- renderEcharts4r({
-      frota %>% filter( ri == input$local, ano == input$anolocal, variavel == "Nacionalidade do Veículo") %>% 
+      db07_nacionalidade_acumulado %>% filter( ri == input$local, ano == input$anolocal) %>% 
         group_by(ri,categoria) %>% summarize( valor = sum(valor,na.rm = TRUE),.groups = 'drop') %>% 
         arrange(valor) %>% mutate(percentual = (valor/sum(valor,na.rm = TRUE))*100) %>% 
         e_charts(x = categoria) %>%

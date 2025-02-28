@@ -10,7 +10,12 @@ tipo_ui <- function(id) {
                selectInput(
                  inputId = NS(id, "tipo"),
                  label = "TIPO DE VEÍCULO",
-                 choices = frota %>% filter(tipo_veiculo != "Total de Veículos") %>% pull(tipo_veiculo) %>% unique(),
+                 choices = frota_acumulado %>% 
+                   filter(
+                     tipo_veiculo != "Total Acumulado de Veículos",
+                     tipo_veiculo != "Total de Veículos"
+                     ) %>% 
+                   pull(tipo_veiculo) %>% unique(),
                  width = "200px"
                )
         ),
@@ -207,18 +212,160 @@ tipo_Server <- function(id) {
     #Atualização de entrada ano----
     #Filtro de ano dinâmico----
     anotipo <- reactive({
-      frota %>% filter(tipo_veiculo == input$tipo,valor > 0)
+      frota_acumulado %>% filter(tipo_veiculo == input$tipo,valor > 0)
     })
     #Sub temática
     observeEvent(anotipo(), {
       choices <- sort(unique(anotipo()[["ano"]]), decreasing = TRUE)
       updateSelectInput(inputId = "ano", choices = choices,  session) 
     })
+    
+    #Tabelas - Perfil----
+    titulo6 <- renderText({
+      req(input$ano)
+      paste0("Estatística Resumo dos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
+    })
+    
+    output$txtgeral <- renderText({
+      titulo6()  
+    })
+    
+    #Download
+    dowtab <- reactive({
+      req(input$ano)
+      categoria <-
+        db08_tipo_vs_categoria_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      cor <-
+        db09_tipo_vs_cor_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>%
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%   
+        arrange(desc(valor)) %>% slice_head(n = 1)
+      
+      combustivel <-
+        db10_tipo_vs_combustivel_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>% 
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      especie <-
+        db11_tipo_vs_especie_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      nacionalidade <-
+        db12_tipo_vs_nacionalide_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      df <- rbind(categoria,cor,combustivel,especie,nacionalidade)
+      # select(tipo_veiculo,variavel,categoria,ano,valor,Percentual)
+    })
+    
+    #Monitora a base filtrada, defini o texto a ser baixado
+    observeEvent(dowtab(),{
+      titulo6()
+      downset_Server("tabdown", dowtab(), titulo6())  
+    })
+    
+    output$tab <- renderReactable({
+      req(input$ano)
+      categoria <-
+        db08_tipo_vs_categoria_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      cor <-
+        db09_tipo_vs_cor_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>%
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%   
+        arrange(desc(valor)) %>% slice_head(n = 1)
+      
+      combustivel <-
+        db10_tipo_vs_combustivel_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>% 
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      especie <-
+        db11_tipo_vs_especie_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      nacionalidade <-
+        db12_tipo_vs_nacionalide_pa_acumulado %>% 
+        filter(tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
+        arrange(desc(valor)) %>%  slice_head(n = 1)
+      
+      df <- rbind(categoria,cor,combustivel,especie,nacionalidade)
+      
+      df %>% reactable(
+        defaultPageSize = 10,
+        striped = FALSE,
+        highlight = TRUE,
+        bordered = TRUE,
+        outlined = TRUE,
+        resizable = TRUE,
+        showSortable = TRUE,
+        pagination = F,
+        columns =  list(
+          variavel = colDef(name = "Características"),
+          categoria = colDef(name = "Predominância"),
+          valor = colDef(name = "Quantidade", format = colFormat(separators = T, locales = "pt-BR")),
+          Percentual = colDef(
+            name = "Percentual(%)",
+            format = colFormat(
+              separators = T,
+              locales = "pt-BR",
+              digits = 2
+            )
+          )
+        ),
+        defaultColDef = colDef(
+          na = "-", 
+          footerStyle = list(fontWeight = "bold"),
+          headerStyle = list(background = "#f7f7f8")
+        ),
+        language = reactableLang(
+          noData = "Sem informação",
+          pageInfo = "{rowStart} a {rowEnd} de {rows} linhas",
+          pagePrevious = "Anterior",
+          pageNext = "Próximo",
+          pagePreviousLabel = "Anterior",
+          pageNextLabel = "Proximo"
+        )
+      )
+    })
+    
+    
+    
+    
+    
+
+    
     #Categoria dos Veículos - Gráfico Barras ----   
     #Título
     titulo1 <- renderText({
-    req(input$ano)
-    paste0("Categorias dos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
+      req(input$ano)
+      paste0("Categorias dos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
     })
     
     output$txtcat <- renderText({
@@ -228,24 +375,20 @@ tipo_Server <- function(id) {
     #Download
     downcat <- reactive({
       req(input$ano)
-        frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Categoria do veículo por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
-        arrange(valor) %>% mutate(tipo_veiculo = input$tipo, variavel = "Categoria do veículo", ano = input$ano) %>% 
-        select(tipo_veiculo,variavel,categoria,ano,valor)  
+      db08_tipo_vs_categoria_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        arrange(valor) %>% 
+        select(tipo_veiculo,variavel,categoria,ano,valor)
     })
-    
+
     #Monitora a base filtrada, defini o texto a ser baixado
     observeEvent(downcat(),{
       titulo1()
-      downset_Server("catdown", downcat(), titulo1())  
+      downset_Server("catdown", downcat(), titulo1())
     })
     
     output$catbar <- renderEcharts4r({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Categoria do veículo por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
+      db08_tipo_vs_categoria_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
         arrange(valor) %>%
         e_charts(x = categoria) %>%
         e_bar(
@@ -301,8 +444,8 @@ tipo_Server <- function(id) {
     #Cor dos Veículos - Gráfico de Barras----
     #Título
     titulo2 <- renderText({
-    req(input$ano)
-    paste0("Cores dos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
+      req(input$ano)
+      paste0("Cores dos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
     })
     
     output$txtcor <- renderText({
@@ -312,10 +455,8 @@ tipo_Server <- function(id) {
     #Download
     downcor <- reactive({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Cor do veículo por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
-        arrange(valor) %>% mutate(tipo_veiculo = input$tipo, variavel = "Cor do veículo",ano = input$ano) %>% 
+      db09_tipo_vs_cor_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        arrange(valor) %>% 
         select(tipo_veiculo,variavel,categoria,ano,valor)
     })
     
@@ -327,9 +468,7 @@ tipo_Server <- function(id) {
     
     output$corbar <- renderEcharts4r({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Cor do veículo por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
+      db09_tipo_vs_cor_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
         arrange(valor) %>% 
         e_charts(x = categoria) %>%
         e_bar(
@@ -386,8 +525,8 @@ tipo_Server <- function(id) {
     #Tipo de Combustível - Gráfico de Barras----
     #Título
     titulo3 <- renderText({
-    req(input$ano)
-    paste0("Combustível utilizado pelos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
+      req(input$ano)
+      paste0("Combustível utilizado pelos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
     })
     
     output$txtcombu <- renderText({
@@ -397,10 +536,8 @@ tipo_Server <- function(id) {
     #Download
     downcombu <- reactive({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Tipo de combustível(s) utilizado(s) por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
-        arrange(valor) %>% mutate(tipo_veiculo = input$tipo, variavel = "Tipo de combustível(s) utilizado(s)",ano = input$ano) %>% 
+      db10_tipo_vs_combustivel_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        arrange(valor) %>% mutate(tipo_veiculo = input$tipo,ano = input$ano) %>% 
         select(tipo_veiculo,variavel,categoria,ano,valor)
     })
     
@@ -412,9 +549,7 @@ tipo_Server <- function(id) {
     
     output$combubar <- renderEcharts4r({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Tipo de combustível(s) utilizado(s) por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
+      db10_tipo_vs_combustivel_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
         arrange(valor) %>%
         e_charts(x = categoria) %>%
         e_bar(
@@ -471,8 +606,8 @@ tipo_Server <- function(id) {
     #Espécie do Veículo - Gráfico de Barras----
     #Título
     titulo4 <- renderText({
-    req(input$ano)
-    paste0("Espécie dos Veículos Licenciados do tipo ",input$tipo," - ",input$ano)
+      req(input$ano)
+      paste0("Espécie dos Veículos Licenciados do tipo ",input$tipo," - ",input$ano)
     })
     
     output$txtesp <- renderText({
@@ -482,10 +617,8 @@ tipo_Server <- function(id) {
     #Download
     downesp <- reactive({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Espécie de Veículo por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
-        arrange(valor) %>% mutate(tipo_veiculo = input$tipo, variavel = "Espécie de Veículo",ano = input$ano) %>% 
+      db11_tipo_vs_especie_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        arrange(valor) %>% mutate(tipo_veiculo = input$tipo,ano = input$ano) %>% 
         select(tipo_veiculo,variavel,categoria,ano,valor)
     })
     
@@ -497,9 +630,7 @@ tipo_Server <- function(id) {
     
     output$espbar <- renderEcharts4r({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Espécie de Veículo por tipo") %>% 
-        group_by(categoria) %>% 
-        summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% complete() %>% 
+      db11_tipo_vs_especie_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
         arrange(valor) %>% 
         e_charts(x = categoria) %>%
         e_bar(
@@ -551,12 +682,11 @@ tipo_Server <- function(id) {
         e_toolbox_feature(feature = "dataZoom") %>%
         e_toolbox_feature(feature = "dataView") 
     })
-    
     #Nacionalidade do Veículo - Gráfico de Setor----
     #Título
     titulo5 <- renderText({
       req(input$ano)
-    paste0("Nacionalidade dos Veículos Licenciados do tipo ",input$tipo," - ",input$ano)  
+      paste0("Nacionalidade dos Veículos Licenciados do tipo ",input$tipo," - ",input$ano)  
     })
     
     output$txtnac <- renderText({
@@ -566,8 +696,8 @@ tipo_Server <- function(id) {
     #Download
     downac <- reactive({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Nacionalidade do Veículo por tipo") %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+      db12_tipo_vs_nacionalide_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        # group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
         arrange(valor) %>% mutate(tipo_veiculo = input$tipo, ano = input$ano, percentual = (valor/sum(valor,na.rm = T))*100) %>% 
         select(tipo_veiculo,categoria,ano,valor,percentual)
     })
@@ -581,9 +711,11 @@ tipo_Server <- function(id) {
     
     output$nacpie <- renderEcharts4r({
       req(input$ano)
-      frota %>% filter( tipo_veiculo == input$tipo, ano == input$ano, variavel == "Nacionalidade do Veículo por tipo") %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        arrange(valor) %>% mutate(ano = input$ano, percentual = (valor/sum(valor,na.rm = T))*100) %>% 
+      db12_tipo_vs_nacionalide_pa_acumulado %>% filter( tipo_veiculo == input$tipo, ano == input$ano) %>% 
+        # group_by(categoria) %>% 
+        # summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
+        arrange(valor) %>% 
+        mutate(ano = input$ano, percentual = (valor/sum(valor,na.rm = T))*100) %>% 
         e_charts(x = categoria) %>%
         e_pie(
           serie = percentual,
@@ -600,143 +732,6 @@ tipo_Server <- function(id) {
     ")
         )
     })
-    
-    
-    #Tabelas - Perfil----
-    titulo6 <- renderText({
-    req(input$ano)
-    paste0("Estatística Resumo dos Veículos Registrados do tipo ",input$tipo," - ",input$ano)
-    })
-    
-    output$txtgeral <- renderText({
-      titulo6()  
-    })
-    
-    #Download
-    dowtab <- reactive({
-      req(input$ano)
-      categoria <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Categoria do veículo por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      cor <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Cor do veículo por tipo", ano == input$ano) %>%
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%   
-        arrange(desc(valor)) %>% slice_head(n = 1)
-      
-      combustivel <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo,variavel == "Tipo de combustível(s) utilizado(s) por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>% 
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      especie <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Espécie de Veículo por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      nacionalidade <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Nacionalidade do Veículo por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      df <- rbind(categoria,cor,combustivel,especie,nacionalidade)
-        # select(tipo_veiculo,variavel,categoria,ano,valor,Percentual)
-    })
-    
-    #Monitora a base filtrada, defini o texto a ser baixado
-    observeEvent(dowtab(),{
-      titulo6()
-      downset_Server("tabdown", dowtab(), titulo6())  
-    })
-    
-    output$tab <- renderReactable({
-      req(input$ano)
-      categoria <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Categoria do veículo por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      cor <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Cor do veículo por tipo", ano == input$ano) %>%
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%   
-        arrange(desc(valor)) %>% slice_head(n = 1)
-      
-      combustivel <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo,variavel == "Tipo de combustível(s) utilizado(s) por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>% 
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      especie <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Espécie de Veículo por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      nacionalidade <-
-        frota %>% 
-        filter(tipo_veiculo == input$tipo, variavel == "Nacionalidade do Veículo por tipo", ano == input$ano) %>% 
-        group_by(categoria) %>% summarize( valor = sum(valor,na.rm = T),.groups = 'drop') %>% 
-        mutate(Percentual = (valor / sum(valor, na.rm = TRUE)) * 100) %>%  
-        arrange(desc(valor)) %>%  slice_head(n = 1)
-      
-      df <- rbind(categoria,cor,combustivel,especie,nacionalidade)
-      
-      df %>% reactable(
-        defaultPageSize = 10,
-        striped = FALSE,
-        highlight = TRUE,
-        bordered = TRUE,
-        outlined = TRUE,
-        resizable = TRUE,
-        showSortable = TRUE,
-        pagination = F,
-        columns =  list(
-          variavel = colDef(name = "Características"),
-          categoria = colDef(name = "Predominância"),
-          valor = colDef(name = "Quantidade", format = colFormat(separators = T, locales = "pt-BR")),
-          Percentual = colDef(
-            name = "Percentual(%)",
-            format = colFormat(
-              separators = T,
-              locales = "pt-BR",
-              digits = 2
-            )
-          )
-        ),
-        defaultColDef = colDef(
-          na = "-", 
-          footerStyle = list(fontWeight = "bold"),
-          headerStyle = list(background = "#f7f7f8")
-        ),
-        language = reactableLang(
-          noData = "Sem informação",
-          pageInfo = "{rowStart} a {rowEnd} de {rows} linhas",
-          pagePrevious = "Anterior",
-          pageNext = "Próximo",
-          pagePreviousLabel = "Anterior",
-          pageNextLabel = "Proximo"
-        )
-      )
-    })
-    
     
   })
 }
