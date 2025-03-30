@@ -304,7 +304,7 @@ total_Server <- function(id) {
             scientific = FALSE
           )
         )),
-        subtitle = paste0("Total de Veículos Registrados - ", input$ano),
+        subtitle = paste0("Frota Total - ", input$ano),
         color = "primary",
         fill = TRUE,
         gradient = TRUE,
@@ -327,7 +327,7 @@ total_Server <- function(id) {
             scientific = FALSE
           )
         )),
-        subtitle = paste0("Total de Veículos Registrados no ano - ", input$ano),
+        subtitle = paste0("Frota Registrada no Ano - ", input$ano),
         color = "danger",
         fill = TRUE,
         gradient = TRUE,
